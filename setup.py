@@ -11,7 +11,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 DESCRIPTION = 'A DuckDB wrapper suitable for bioinformatic analysis of multi-omic data.'
 LONG_DESCRIPTION = 'This package wraps the DuckDB Python API and provides a subset of DuckDB functionality that is suitable for frequent and repetitive tasks involved in bioinformatic analysis of multi-omic data.'
 
