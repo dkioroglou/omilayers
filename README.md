@@ -4,7 +4,7 @@
 
 ``omilayers`` is a Python data management library. It is suitable for multi-omic data analysis, hence the `omi` prefix, that involves the handling of diverse datasets usually referred to as omic layers. `omilayers` is based on `DuckDB` and provides a high-level interface for frequent and repetitive tasks that involve fast storage, processing and retrieval of data without the need to constantly write SQL queries.
 
-The rationale behind `omilayer` is the following:
+The rationale behind `omilayers` is the following:
 
 * User stores **layers** of omic data (tables in SQL lingo).
 * User creates new layers by processing and restructuring existing layers.
@@ -32,16 +32,25 @@ omi = Omilayers("dbname.duckdb")
 result = omi.layers['omicdata']['foo']
 ```
 
-
-## Testing with synthetic omic data
-
-The directory `synthetic_data` includes a jupyter notebook for testing `omilayers` using synthetic multi-omic data.
-
-
 ## Installation
 
 ```
 pip install omilayers
+```
+
+
+## Testing with synthetic omic data
+
+The directory `synthetic_data` includes a jupyter notebook for testing `omilayers` using synthetic multi-omic data. It also includes the Python script `create_synthetic_vcf/synthesize_vcf.py` that was used to create the synthetic VCF that is hosted in Zenodo ([![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12790872.svg)](https://doi.org/10.5281/zenodo.12790872)).
+
+The recreation of the synthetic VCF can be done as following:
+```bash
+for i in {1..22} {X,Y,M};do python synthesize_vcf.py $i;done
+```
+
+To join the generated VCFs into a single VCF:
+```bash
+for i in {1..22} {X,Y,M};do cat chr${i}.vcf >> simulated.vcf;done
 ```
 
 
