@@ -41,7 +41,7 @@ pip install omilayers
 
 ## Testing with synthetic omic data
 
-The directory `synthetic_data` includes a jupyter notebook for testing `omilayers` using synthetic multi-omic data. It also includes the Python script `create_synthetic_vcf/synthesize_vcf.py` that was used to create the synthetic VCF that is hosted in Zenodo ([![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12790872.svg)](https://doi.org/10.5281/zenodo.12790872)).
+The directory `synthetic_data` includes a jupyter notebook for testing `omilayers` using synthetic multi-omic data. It also includes the Python script `create_synthetic_vcf/synthesize_vcf.py` that was used to create the synthetic VCF that is hosted in Zenodo [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12790872.svg)](https://doi.org/10.5281/zenodo.12790872).
 
 The recreation of the synthetic VCF can be done as following:
 ```bash
