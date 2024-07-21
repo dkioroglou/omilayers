@@ -33,6 +33,11 @@ result = omi.layers['omicdata']['foo']
 ```
 
 
+## Testing with synthetic omic data
+
+The directory `synthetic_data` includes a jupyter notebook for testing `omilayers` using synthetic multi-omic data.
+
+
 ## Installation
 
 ```
