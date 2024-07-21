@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="74.937004mm"
+   height="23.977152mm"
+   viewBox="0 0 74.937004 23.977152"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
+   sodipodi:docname="omilayers_logo.svg"
+   inkscape:export-filename="omilayers_logo.png"
+   inkscape:export-xdpi="300"
+   inkscape:export-ydpi="300"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     showguides="true"
+     inkscape:zoom="0.99780624"
+     inkscape:cx="208.45731"
+     inkscape:cy="-32.070355"
+     inkscape:window-width="1920"
+     inkscape:window-height="983"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <sodipodi:guide
+       position="39.766006,276.03267"
+       orientation="0,-1"
+       id="guide1"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-56.796492,-113.28267)">
+    <ellipse
+       style="fill:#e4b678;fill-opacity:1;stroke:#000000;stroke-width:0.135194;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4.2"
+       id="path1"
+       cx="67.820213"
+       cy="123.93049"
+       rx="10.956124"
+       ry="10.580218" />
+    <ellipse
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.102524;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4.2"
+       id="path1-6"
+       cx="67.853371"
+       cy="123.73402"
+       rx="8.3084898"
+       ry="8.0234251" />
+    <rect
+       style="fill:#0f4b80;fill-opacity:1;stroke:#000000;stroke-width:0.0917969;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4.2"
+       id="rect1"
+       width="8.2829437"
+       height="8.1195736"
+       x="168.85567"
+       y="92.133286"
+       transform="matrix(0.88126375,0.47262481,-0.88126375,0.47262481,0,0)" />
+    <rect
+       style="fill:#3977ae;fill-opacity:1;stroke:#000000;stroke-width:0.0912088;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4.2"
+       id="rect1-5"
+       width="8.2298689"
+       height="8.0675449"
+       x="168.93289"
+       y="92.485504"
+       transform="matrix(0.88702453,0.46172231,-0.88702453,0.46172231,0,0)" />
+    <rect
+       style="fill:#77aad8;fill-opacity:1;stroke:#000000;stroke-width:0.0912088;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4.2"
+       id="rect1-5-6"
+       width="8.2298689"
+       height="8.0675449"
+       x="165.09569"
+       y="88.606567"
+       transform="matrix(0.88702453,0.46172231,-0.88702453,0.46172231,0,0)" />
+    <text
+       xml:space="preserve"
+       style="font-size:14.1685px;line-height:1.1;font-family:Arial;-inkscape-font-specification:Arial;text-align:center;letter-spacing:0.0014995px;text-anchor:middle;fill:#005158;fill-opacity:1;stroke:none;stroke-width:0.226697;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4.2;stroke-opacity:1"
+       x="103.53653"
+       y="134.27808"
+       id="text1"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial;fill:#005158;fill-opacity:1;stroke:none;stroke-width:0.226697;stroke-opacity:1"
+         x="103.53728"
+         y="134.27808">miLayers</tspan></text>
+  </g>
+</svg>

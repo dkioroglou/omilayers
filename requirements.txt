@@ -1,0 +1,3 @@
+python-duckdb>=0.10.2
+pandas
+numpy
