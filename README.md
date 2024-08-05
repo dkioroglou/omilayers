@@ -1,6 +1,6 @@
 # omilayers
 
-[![Documentation Status](https://readthedocs.org/projects/pip/badge/?version=stable)](https://pip.pypa.io/en/stable/?badge=stable) 
+[![Documentation Status](https://readthedocs.org/projects/pip/badge/?version=stable)](https://pip.pypa.io/en/stable/?badge=stable) [![Downloads](https://static.pepy.tech/badge/omilayers)](https://pepy.tech/project/omilayers)
 
 ``omilayers`` is a Python data management library. It is suitable for multi-omic data analysis, hence the `omi` prefix, that involves the handling of diverse datasets usually referred to as omic layers. `omilayers` is based on `DuckDB` and provides a high-level interface for frequent and repetitive tasks that involve fast storage, processing and retrieval of data without the need to constantly write SQL queries.
 
