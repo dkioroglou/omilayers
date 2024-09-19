@@ -3,16 +3,30 @@ import duckdb
 from typing import Union
 import pandas as pd
 from omilayers.core import Stack
-from omilayers.core.dbclass import DButils
 
 class Omilayers:
 
-    def __init__(self, db:str, config:dict={"threads":1}, read_only:bool=False):
+    def __init__(self, db:str, config:dict={"threads":1}, read_only:bool=False, engine:str='duckdb'):
         self.config = config
         self.db = db
         self.read_only = read_only
+        self.engine = engine
+
+        if self._is_engine_supported():
+            if engine == "duckdb":
+                from omilayers.engines.duckdb.dbclass import DButils
+            elif engine == "sqlite":
+                from omilayers.engines.sqlite.dbclass import DButils
+
         self._dbutils = DButils(db, config, read_only=read_only)
-        self.layers = Stack(db, config, read_only)
+        self.layers = Stack(db, config, read_only, self._dbutils)
+
+    def _is_engine_supported(self) -> bool:
+        supported_engines = ['sqlite', 'duckdb']
+        if self.engine in supported_engines:
+            return True
+        else:
+            raise ValueError(f"Engine name is not in supported engines: {supported_engines}")
 
     def run(self, query:str, fetchdf=False) -> Union[pd.DataFrame, None]:
         """

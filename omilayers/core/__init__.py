@@ -4,21 +4,20 @@ from typing import List, Dict, Union
 from omilayers import utils
 import pandas as pd
 import numpy as np
-from omilayers.core.dbclass import DButils
-from pandas.core.api import DataFrame
 
 class Stack:
 
-    def __init__(self, db, config, read_only):
+    def __init__(self, db:str, config:str, read_only:bool, dbutilsClass):
         self.db = db
         self.config = config
         self.read_only = read_only
-        self._dbutils = DButils(db, config, read_only=read_only)
+        # self._dbutils = DButils(db, config, read_only=read_only)
+        self._dbutils = dbutilsClass
         self._layers = dict()
         if Path(self.db).exists():
             layerNames = self._dbutils._get_tables_names()
             for name in layerNames:
-                self._layers[name] = Layer(db, config, read_only, name, data=None)
+                self._layers[name] = Layer(name, data=None, dbutilsClass=self._dbutils)
 
     def drop(self, layer:str) -> None:
         """
@@ -45,7 +44,7 @@ class Stack:
             The new name of the layer.
         """
         self._layers.pop(layer, None)
-        self._layers[new_name] = Layer(self.db, self.config, self.read_only, new_name, data=None)
+        self._layers[new_name] = Layer(new_name, data=None, dbutilsClass=self._dbutils)
         self._dbutils._rename_table(layer, new_name)
         self._dbutils._update_tables_info(layer, "name", new_name)
 
@@ -103,13 +102,13 @@ class Stack:
             with pd.read_csv(filename, chunksize=chunksize, *args, **kwargs) as infile:
                 for dftmp in infile:
                     if not layerExists:
-                        self._layers[layer] = Layer(self.db, self.config, self.read_only, layer, data="dftmp")
+                        self._layers[layer] = Layer(layer, data="dftmp", dbutilsClass=self._dbutils)
                         layerExists = True
                     else:
                         self._dbutils._insert_rows(table=layer, data="dftmp", ordered=True)
         else:
             data = pd.read_csv(filename, *arg, **kwargs)
-            self._layers[layer] = Layer(self.db, self.config, self.read_only, layer, data)
+            self._layers[layer] = Layer(layer, data, self._dbutils)
 
     def __getitem__(self, layer:str) -> pd.DataFrame:
         if not self._layers.get(layer, False):
@@ -117,7 +116,7 @@ class Stack:
         return self._layers[layer]
 
     def __setitem__(self, layer:str, data:Union[str,None]):
-        self._layers[layer] = Layer(self.db, self.config, self.read_only, layer, data)
+        self._layers[layer] = Layer(layer, data, self._dbutils)
 
     def __call__(self, tag:Union[None,str]=None) -> pd.DataFrame:
         df = self._dbutils._select_cols(table="tables_info", cols="*")
@@ -132,10 +131,8 @@ class Stack:
 
 class Selector:
 
-    def __init__(self, db, config, read_only, layer) -> None:
-        self._dbutils = DButils(db, config, read_only=read_only)
-        self.db = db
-        self.config = config
+    def __init__(self, layer, dbutilsClass) -> None:
+        self._dbutils = dbutilsClass
         self.layer = layer
 
     def __getitem__(self, indices) -> pd.DataFrame:
@@ -151,10 +148,10 @@ class Selector:
 
 class Layer:
 
-    def __init__(self, db, config, read_only, name, data:Union[str,None]) -> None:
-        self._dbutils = DButils(db, config, read_only=read_only)
+    def __init__(self, name:str, data:Union[str,None], dbutilsClass) -> None:
+        self._dbutils = dbutilsClass
         self.name = name
-        self.loc = Selector(db, config, read_only, name)
+        self.loc = Selector(name, self._dbutils)
         if data is not None:
             if not isinstance(data, str):
                 raise ValueError("Data should be a string referring to the name of a pandas.DataFrame object.")
