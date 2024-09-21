@@ -60,3 +60,18 @@ def create_data_array_for_query(data:Union[List, np.ndarray, pd.Series, pd.DataF
             return df.values.tolist()
 
 
+def _dataframe_dtypes_to_sql_datatypes(dfname:str) -> List:
+    df = globals()[dfname]
+    sqlDataTypes = []
+    for item in df.dtypes.items():
+        colName, colType = item
+        if str(colType).startswith("int"):
+            sqlDataTypes.extend([colName, 'INTEGER'])
+        elif str(colType).startswith("float"):
+            sqlDataTypes.extend([colName, 'REAL'])
+        elif str(colType).startswith("object"):
+            sqlDataTypes.extend([colName, 'TEXT'])
+        else:
+            sqlDataTypes.extend([colName, 'TEXT'])
+    return sqlDataTypes
+
