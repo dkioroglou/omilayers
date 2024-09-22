@@ -421,3 +421,105 @@ class DButils:
         query = f"UPDATE {table} SET {col} = ? WHERE {where_col} = ?"
         self._sqlite_executemany_commit_query(query, values=data)
 
+    def _add_multiple_columns(self, table:str, cols:List, data:pd.DataFrame) -> None:
+        """
+        Add multiple columns to a table.
+
+        Parameters
+        ----------
+        table: str
+            The name of the table to add columns to.
+        cols: list
+            The columns names to be added to the table.
+        data: pd.DataFrame
+            Dataframe containing the data to be added.
+        """
+        coltypes = utils.convert_to_sqlite_dtypes(data)
+        cols_n_types = [f"{x} {y}" for x,y in zip(cols, coltypes)]
+        for item in cols_n_types:
+            query = f"ALTER TABLE {table} ADD COLUMN {item}"
+            self._sqlite_execute_commit_query(query)
+        for i in range(len(data)):
+            values = data.iloc[i, :].values
+            updates = [f"{col} = {value}" for col,value in zip(cols, values)]
+            query = f"UPDATE {table} SET {','.join(updates)} WHERE rowid = {i}"
+            self._sqlite_execute_commit_query(query)
+
+    def _update_column(self, table:str, col:str, data:Union[pd.Series, np.ndarray, List]) -> None:
+        """
+        Update the data of a given column in the table.
+
+        Parameters
+        ----------
+        table: str
+            The name of the table of the column to be updated.
+        col: str
+            The name of the column in the table.
+        data: pd.Series, np.ndarray, list
+            The data containing the new values for the column.
+        """
+        rowids = self._get_table_rowids(table)
+        data = utils.create_data_array_for_sqlite_query(data, rowids=rowids)
+        query = f"UPDATE {table} SET {col} = (?) WHERE rowid = (?)"
+        self._sqlite_executemany_commit_query(query, values=data)
+
+    def _update_tables_info(self, table:str, col:str, value:str) -> None:
+        """
+        Update layer's name, tag or description in tables_info
+
+        Parameters
+        ----------
+        table: str
+            Then name of the layer.
+        col: str
+            The column to be updated. Possible values, "name", "tab" or "description".
+        value: str
+            The new value for the updated column.
+        """
+        query = f"UPDATE tables_info SET {col} = (?) WHERE name = (?)"
+        self._sqlite_execute_commit_query(query, values=(value, table))
+
+    def _get_from_tables_info(self, table:str, col:str) -> Union[str,List]:
+        """
+        Get all or specific column from tables_info for layer.
+
+        Parameters
+        ----------
+        table: str
+            The name of the layer in the tables_info.
+        col: str
+            The columns for layers to be fetched. if col="*" then all columns will be fetched.
+
+        Returns
+        -------
+            One or more columns from tables_info for a given layer.
+        """
+        query = f"SELECT {col} FROM tables_info WHERE name='{table}'"
+        result = self._sqlite_execute_fetch_query(query, fetchall=False)
+        return result
+
+    def _drop_column(self, table:str, col=str) -> None:
+        """
+        Delete a given column from table.
+
+        Parameters
+        ----------
+        table: str
+            Name of table that has the column.
+        col: str
+            Name of column to delete.
+        """
+        query = f"ALTER TABLE {table} DROP {col}"
+        self._sqlite_execute_commit_query(query)
+
+    def _run_query(self, query:str, fetchdf=False) -> Union[pd.DataFrame, None]:
+        """Run an arbritary query."""
+        if not fetchdf:
+            self._sqlite_executemany_commit_query(query)
+        else:
+            cols = query.split(" ", 1)[1]
+            cols = cols.lower().split("from")[0].strip(" ")
+            data = self._sqlite_execute_fetch_query(query, fetchall=True)
+            df = pd.DataFrame(data, columns=cols)
+            return df
+
