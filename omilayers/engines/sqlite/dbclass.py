@@ -150,6 +150,7 @@ class DButils:
         if self._table_exists(table):
             self._drop_table(table)
 
+        print("globals", globals())
         df = globals()[dfname]
 
         try:
