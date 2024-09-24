@@ -207,7 +207,7 @@ class Layer:
         except Exception as error:
             print(error)
 
-    def insert(self, data:Union[Dict,str], ordered:bool=False) -> None:
+    def insert(self, data:Union[Dict,pd.DataFrame], ordered:bool=False) -> None:
         """
         Insert new rows of data to an existing layer.
 

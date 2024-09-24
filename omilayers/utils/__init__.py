@@ -91,11 +91,11 @@ def create_data_array_for_sqlite_query(data:Union[List, np.ndarray, pd.Series, p
             rowids = rowids.tolist()
         if isinstance(data, pd.DataFrame):
             data['rowid'] = rowids
-            return list(data.to_records(index=False))
+            return [x.tolist() for x in data.to_records(index=False)]
         else:
             df = pd.DataFrame(data)
             df['rowid'] = rowids
-            return list(data.to_records(index=False))
+            return [x.tolist() for x in data.to_records(index=False)]
 
 
 def _dataframe_dtypes_to_sql_datatypes(df:pd.DataFrame) -> List:

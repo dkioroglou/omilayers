@@ -1,5 +1,6 @@
 from typing import List, Union
 from pathlib import Path
+from duckdb import fetchall
 import numpy as np
 import pandas as pd
 from omilayers import utils
@@ -188,7 +189,11 @@ class DButils:
         The selected columns from the specified table as pandas.DataFrame.
         """
         if isinstance(cols, str):
-            cols = [cols]
+            if cols == "*":
+                cols = self._get_table_column_names(table)
+            else:
+                cols = [cols]
+
         colsString = ','.join(cols)
         if limit is None:
             query = f"SELECT {colsString} FROM {table}"
@@ -337,18 +342,18 @@ class DButils:
                     cols = ",".join(tableCols[start:end])
 
         if where != "rowid":
-            colsToSelectString = f"SELECT rowid,{where},{cols}"
+            colsToSelectString = f"rowid,{where},{cols}"
         else:
-            colsToSelectString = f"SELECT rowid,{cols}"
+            colsToSelectString = f"rowid,{cols}"
 
         if isinstance(values, str):
-            query = colsToSelectString + f"FROM {table} WHERE {where} = '{values}'"
+            query = f"SELECT {colsToSelectString} FROM {table} WHERE {where} = '{values}'"
         elif isinstance(values, int) or isinstance(values, float):
-            query = colsToSelectString + f"FROM {table} WHERE {where} = {values}"
+            query = f"SELECT {colsToSelectString} FROM {table} WHERE {where} = {values}"
         elif isinstance(values, slice):
             start, end, _ = values.start, values.stop, values.step
             if start is None and end is None:
-                query = colsToSelectString + f"FROM {table}"
+                query = f"SELECT {colsToSelectString} FROM {table}"
             else:
                 rowIDS = self._get_table_rowids(table)
                 if start is None:
@@ -357,10 +362,10 @@ class DButils:
                     end = rowIDS[-1]
                 else:
                     end -= 1
-                query = colsToSelectString + f"FROM {table} WHERE {where} BETWEEN {start} AND {end}"
+                query = f"SELECT {colsToSelectString} FROM {table} WHERE {where} BETWEEN {start} AND {end}"
         else:
             values = ",".join(f"'{x}'" for x in values)
-            query = colsToSelectString + f"FROM {table} WHERE {where} IN ({values})"
+            query = f"SELECT {colsToSelectString} FROM {table} WHERE {where} IN ({values})"
         results = self._sqlite_execute_fetch_query(query, fetchall=True)
         df = pd.DataFrame(results, columns=colsToSelectString.split(",")) 
         return df.set_index("rowid")
@@ -373,7 +378,7 @@ class DButils:
             cols = [x.strip(" ") for x in cols.split(",")]
         else:
             cols = [cols]
-        result = self._sqlite_execute_fetch_query(query)
+        results = self._sqlite_execute_fetch_query(query, fetchall=True)
         df = pd.DataFrame(results, columns=cols)
         return df
 
@@ -487,8 +492,10 @@ class DButils:
         -------
             One or more columns from tables_info for a given layer.
         """
-        query = f"SELECT {col} FROM tables_info WHERE name='{table}'"
+        query = f'SELECT {col} FROM tables_info WHERE name="{table}"'
         result = self._sqlite_execute_fetch_query(query, fetchall=False)
+        if len(result) == 1:
+            result = result[0]
         return result
 
     def _drop_column(self, table:str, col=str) -> None:
