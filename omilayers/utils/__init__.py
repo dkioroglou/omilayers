@@ -98,18 +98,17 @@ def create_data_array_for_sqlite_query(data:Union[List, np.ndarray, pd.Series, p
             return list(data.to_records(index=False))
 
 
-def _dataframe_dtypes_to_sql_datatypes(dfname:str) -> List:
-    df = globals()[dfname]
+def _dataframe_dtypes_to_sql_datatypes(df:pd.DataFrame) -> List:
     sqlDataTypes = []
     for item in df.dtypes.items():
         colName, colType = item
         if str(colType).startswith("int"):
-            sqlDataTypes.extend([colName, 'INTEGER'])
+            sqlDataTypes.append(f'{colName} INTEGER')
         elif str(colType).startswith("float"):
-            sqlDataTypes.extend([colName, 'REAL'])
+            sqlDataTypes.append(f'{colName} REAL')
         elif str(colType).startswith("object"):
-            sqlDataTypes.extend([colName, 'TEXT'])
+            sqlDataTypes.append(f'{colName} TEXT')
         else:
-            sqlDataTypes.extend([colName, 'TEXT'])
+            sqlDataTypes.append(f'{colName} TEXT')
     return sqlDataTypes
 

@@ -4,6 +4,7 @@ from typing import List, Dict, Union
 from omilayers import utils
 import pandas as pd
 import numpy as np
+import inspect
 
 class Stack:
 
@@ -148,15 +149,13 @@ class Selector:
 
 class Layer:
 
-    def __init__(self, name:str, data:Union[str,None], dbutilsClass) -> None:
+    def __init__(self, name:str, data:Union[pd.DataFrame,None], dbutilsClass) -> None:
         self._dbutils = dbutilsClass
         self.name = name
         self.loc = Selector(name, self._dbutils)
         if data is not None:
-            if not isinstance(data, str):
-                raise ValueError("Data should be a string referring to the name of a pandas.DataFrame object.")
             try:
-                self._dbutils._create_table_from_pandas(table=name, dfname=data)
+                self._dbutils._create_table_from_pandas(table=name, df=data)
             except Exception as error:
                 print(error)
 
@@ -204,7 +203,7 @@ class Layer:
         try:
             layerCurrentInfo = self.info
             layerCurrentTag = self.tag
-            self._dbutils._create_table_from_pandas(table=self.name, dfname=data)
+            self._dbutils._create_table_from_pandas(table=self.name, df=data)
             self.set_info(layerCurrentInfo)
             self.set_tag(layerCurrentTag)
         except Exception as error:

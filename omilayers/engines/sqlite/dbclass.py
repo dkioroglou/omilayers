@@ -5,6 +5,7 @@ import pandas as pd
 from omilayers import utils
 import contextlib
 import sqlite3
+import inspect
 
 class DButils:
 
@@ -133,7 +134,7 @@ class DButils:
         self._sqlite_execute_commit_query(query)
         self._delete_rows(table="tables_info", where_col="name", where_values=table)
 
-    def _create_table_from_pandas(self, table:str, dfname:str) -> None:
+    def _create_table_from_pandas(self, table:str, df:pd.DataFrame) -> None:
         """
         Deletes previous created table if exists, creates then new table and inserts new values.
 
@@ -144,14 +145,9 @@ class DButils:
         dfname: str
             A string that is referring to a pandas.DataFrame object.
         """
-        if not isinstance(dfname, str):
-            raise ValueError("Dataframe should be a string referring to the name of a pandas.DataFrame object.")
 
         if self._table_exists(table):
             self._drop_table(table)
-
-        print("globals", globals())
-        df = globals()[dfname]
 
         try:
             Nrows, Ncols = df.shape
@@ -163,12 +159,12 @@ class DButils:
                 self._delete_rows(table='tables_info', where_col="name", where_values=table)
 
         try:
-            query = "CREATE TABLE {} ({})".format(table, ",".join(utils._dataframe_dtypes_to_sql_datatypes(dfname)))
+            query = 'CREATE TABLE "{}" ({})'.format(table, ", ".join(utils._dataframe_dtypes_to_sql_datatypes(df)))
             self._sqlite_execute_commit_query(query)
 
             queryPlaceHolders = utils.create_query_placeholders(df)
-            query = f"INSERT INTO {table} {','.join(df.columns)} VALUES {queryPlaceHolders}"
-            self._sqlite_executemany_commit_query(query, list(df.to_records(index=False)))
+            query = f'INSERT INTO "{table}" ({','.join(df.columns)}) VALUES {queryPlaceHolders}'
+            self._sqlite_executemany_commit_query(query, [x.tolist() for x in df.to_records(index=False)])
         except Exception as error:
             print(error)
             if self._table_exists(table):

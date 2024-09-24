@@ -52,17 +52,18 @@ class DButils:
             result = con.sql(query).fetchnumpy()
         return result['rowid']
 
-    def _create_table_from_pandas(self, table:str, dfname:str) -> None:
+    def _create_table_from_pandas(self, table:str, df:pd.DataFrame) -> None:
         """
         Deletes previous created table if exists, creates then new table and inserts new values.
 
         Parameters
         ----------
-        table: str
+        table: pandas.DataFrame
             The name of the table.
         dfname: str
             A string that is referring to a pandas.DataFrame object.
         """
+        dfLocal = df
         if self._table_exists(table):
             self._drop_table(table)
         with duckdb.connect(self.db, read_only=self.read_only) as con:
@@ -70,7 +71,7 @@ class DButils:
             try:
                 query = "INSERT INTO tables_info (name) VALUES (?)"
                 con.execute(query, [table])
-                query = f"CREATE TABLE {table} AS SELECT * FROM '{dfname}'" 
+                query = f"CREATE TABLE {table} AS SELECT * FROM 'dfLocal'" 
                 con.execute(query)
             except Exception as error:
                 print(error)
