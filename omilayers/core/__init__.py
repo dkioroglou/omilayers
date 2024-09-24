@@ -155,7 +155,7 @@ class Layer:
         self.loc = Selector(name, self._dbutils)
         if data is not None:
             try:
-                self._dbutils._create_table_from_pandas(table=name, df=data)
+                self._dbutils._create_table_from_pandas(table=name, data=data)
             except Exception as error:
                 print(error)
 
@@ -189,21 +189,19 @@ class Layer:
         """Change the assigned tag of the layer."""
         self._dbutils._update_tables_info(table=self.name, col="tag", value=value)
 
-    def set_data(self, data:str) -> None:
+    def set_data(self, data:pd.DataFrame) -> None:
         """
         Change the data the layer currently holds.
 
         Parameters
         ----------
-        data: str
-            String that refers to a pandas.DataFrame.
+        data: pandas.DataFrame 
+            A pandas.DataFrame object.
         """
-        if not isinstance(data, str):
-            raise ValueError("Data should be a string referring to the name of a pandas.DataFrame object.")
         try:
             layerCurrentInfo = self.info
             layerCurrentTag = self.tag
-            self._dbutils._create_table_from_pandas(table=self.name, df=data)
+            self._dbutils._create_table_from_pandas(table=self.name, data=data)
             self.set_info(layerCurrentInfo)
             self.set_tag(layerCurrentTag)
         except Exception as error:
@@ -215,8 +213,8 @@ class Layer:
 
         Parameters
         ----------
-        data: str, dict
-            Pass a string that refers to a pandas.DataFrame. The rows of the pandas.DataFrame will be inserted as new layer rows. Alternatively, pass a dictionary with keys the names of the columns of the layer and values the data to be inserted as rows.
+        data: pandas.DataFrame, dict
+            Pass a pandas.DataFrame object. The rows of the pandas.DataFrame will be inserted as new layer rows. Alternatively, pass a dictionary with keys the names of the columns of the layer and values the data to be inserted as rows.
         ordered: bool
             Pass True only in case data is string, and the order of the columns in the referred pandas.DataFrame matches the order of the layer's columns.
         """
@@ -227,7 +225,7 @@ class Layer:
             else:
                 Nrows = len(data[firstKey])
             dfData = pd.DataFrame(data, index=list(range(Nrows)))
-            self._dbutils._insert_rows(table=self.name, data="dfData")
+            self._dbutils._insert_rows(table=self.name, data=dfData)
         else:
             self._dbutils._insert_rows(table=self.name, data=data, ordered=ordered)
 

@@ -134,7 +134,7 @@ class DButils:
         self._sqlite_execute_commit_query(query)
         self._delete_rows(table="tables_info", where_col="name", where_values=table)
 
-    def _create_table_from_pandas(self, table:str, df:pd.DataFrame) -> None:
+    def _create_table_from_pandas(self, table:str, data:pd.DataFrame) -> None:
         """
         Deletes previous created table if exists, creates then new table and inserts new values.
 
@@ -142,15 +142,15 @@ class DButils:
         ----------
         table: str
             The name of the table.
-        dfname: str
-            A string that is referring to a pandas.DataFrame object.
+        data: pandas.DataFrame
+            A pandas.DataFrame object.
         """
 
         if self._table_exists(table):
             self._drop_table(table)
 
         try:
-            Nrows, Ncols = df.shape
+            Nrows, Ncols = data.shape
             query = "INSERT INTO tables_info (name,shape) VALUES (?,?)"
             self._sqlite_execute_commit_query(query, values=(table,f"{Nrows}x{Ncols}"))
         except Exception as error:
@@ -159,12 +159,12 @@ class DButils:
                 self._delete_rows(table='tables_info', where_col="name", where_values=table)
 
         try:
-            query = 'CREATE TABLE "{}" ({})'.format(table, ", ".join(utils._dataframe_dtypes_to_sql_datatypes(df)))
+            query = 'CREATE TABLE "{}" ({})'.format(table, ", ".join(utils._dataframe_dtypes_to_sql_datatypes(data)))
             self._sqlite_execute_commit_query(query)
 
-            queryPlaceHolders = utils.create_query_placeholders(df)
-            query = f'INSERT INTO "{table}" ({','.join(df.columns)}) VALUES {queryPlaceHolders}'
-            self._sqlite_executemany_commit_query(query, [x.tolist() for x in df.to_records(index=False)])
+            queryPlaceHolders = utils.create_query_placeholders(data)
+            query = f'INSERT INTO "{table}" ({','.join(data.columns)}) VALUES {queryPlaceHolders}'
+            self._sqlite_executemany_commit_query(query, [x.tolist() for x in data.to_records(index=False)])
         except Exception as error:
             print(error)
             if self._table_exists(table):
@@ -217,7 +217,7 @@ class DButils:
         cols = [res[0] for res in results]
         return cols
 
-    def _insert_rows(self, table:str, data:str, ordered:bool=False) -> None:
+    def _insert_rows(self, table:str, data:pd.DataFrame, ordered:bool=False) -> None:
         """
         Insert one or more rows to table using pandas.DataFrame object.
 
@@ -225,29 +225,25 @@ class DButils:
         ----------
         table: str
             Name of the table to insert rows.
-        data: str
-            String referring to a pandas.DataFrame object.
+        data: pandas.DataFrame
+            A pandas.DataFrame object.
         ordered: boolean
             True if the order of the columns in the pandas.DataFrame object matches the order of the column in table. False otherwise.
         """
-        if not isinstance(data, str):
-            raise ValueError("Data should be a string referring to the name of a pandas.DataFrame object.")
-
-        df = globals()[data]
         if not ordered:
             colsOrder = self._get_table_column_names(table)
-            df = df[colsOrder]
+            data = data[colsOrder]
 
         # Update table's shape
         Nrows, Ncols = self._get_table_shape(table)
-        Nrows += df.shape[0]
+        Nrows += data.shape[0]
         tableShape = f"{Nrows}x{Ncols}"
         query = f"UPDATE tables_info SET shape='{tableShape}' WHERE name='{table}'"
         self._sqlite_execute_commit_query(query)
 
-        queryPlaceHolders = utils.create_query_placeholders(df)
-        query = f"INSERT INTO {table} {','.join(df.columns)} VALUES {queryPlaceHolders}"
-        self._sqlite_executemany_commit_query(query, list(df.to_records(index=False)))
+        queryPlaceHolders = utils.create_query_placeholders(data)
+        query = f"INSERT INTO {table} ({','.join(data.columns)}) VALUES {queryPlaceHolders}"
+        self._sqlite_executemany_commit_query(query, [x.tolist() for x in data.to_records(index=False)])
 
     def _get_tables_info(self, tag:Union[None,str]=None) -> pd.DataFrame:
         """
