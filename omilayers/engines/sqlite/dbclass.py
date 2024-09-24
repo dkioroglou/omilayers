@@ -164,7 +164,7 @@ class DButils:
             self._sqlite_execute_commit_query(query)
 
             queryPlaceHolders = utils.create_query_placeholders(data)
-            query = f'INSERT INTO "{table}" ({','.join(data.columns)}) VALUES {queryPlaceHolders}'
+            query = f'INSERT INTO "{table}" ({",".join(data.columns)}) VALUES {queryPlaceHolders}'
             self._sqlite_executemany_commit_query(query, [x.tolist() for x in data.to_records(index=False)])
         except Exception as error:
             print(error)
@@ -515,7 +515,7 @@ class DButils:
     def _run_query(self, query:str, fetchdf=False) -> Union[pd.DataFrame, None]:
         """Run an arbritary query."""
         if not fetchdf:
-            self._sqlite_executemany_commit_query(query)
+            self._sqlite_execute_commit_query(query)
         else:
             cols = query.split(" ", 1)[1]
             cols = cols.lower().split("from")[0].strip(" ")

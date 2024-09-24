@@ -52,7 +52,7 @@ class DButils:
             result = con.sql(query).fetchnumpy()
         return result['rowid']
 
-    def _create_table_from_pandas(self, table:str, df:pd.DataFrame) -> None:
+    def _create_table_from_pandas(self, table:str, data:pd.DataFrame) -> None:
         """
         Deletes previous created table if exists, creates then new table and inserts new values.
 
@@ -60,10 +60,10 @@ class DButils:
         ----------
         table: pandas.DataFrame
             The name of the table.
-        dfname: str
-            A string that is referring to a pandas.DataFrame object.
+        data: pandas.DataFrame
+            A pandas.DataFrame object.
         """
-        dfLocal = df
+        dfLocal = data
         if self._table_exists(table):
             self._drop_table(table)
         with duckdb.connect(self.db, read_only=self.read_only) as con:
@@ -80,7 +80,7 @@ class DButils:
                 if table in self._select_cols(table='tables_info', cols='name')['name'].values.tolist():
                     self._delete_rows(table='tables_info', where_col="name", where_values=table)
 
-    def _insert_rows(self, table:str, data:str, ordered:bool=False) -> None:
+    def _insert_rows(self, table:str, data:pd.DataFrame, ordered:bool=False) -> None:
         """
         Insert one or more rows to table using pandas.DataFrame object.
 
@@ -88,17 +88,16 @@ class DButils:
         ----------
         table: str
             Name of the table to insert rows.
-        data: str
-            String referring to a pandas.DataFrame object.
+        data: pandas.DataFrame
+            A pandas.DataFrame object.
         ordered: boolean
             True if the order of the columns in the pandas.DataFrame object matches the order of the column in table. False otherwise.
         """
-        if not isinstance(data, str):
-            raise ValueError("Data should be a string referring to the name of a pandas.DataFrame object.")
+        dfLocal = data
         if not ordered:
-            query = f"INSERT INTO {table} BY NAME SELECT * FROM {data}"
+            query = f"INSERT INTO {table} BY NAME SELECT * FROM 'dfLocal'"
         else:
-            query = f"INSERT INTO {table} SELECT * FROM {data}"
+            query = f"INSERT INTO {table} SELECT * FROM 'dfLocal'"
         with duckdb.connect(self.db, read_only=self.read_only) as con:
             self._configureDB(con)
             con.execute(query)

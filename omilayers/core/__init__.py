@@ -116,7 +116,7 @@ class Stack:
             raise ValueError(f"Layer '{layer}' does not exist.")
         return self._layers[layer]
 
-    def __setitem__(self, layer:str, data:Union[str,None]):
+    def __setitem__(self, layer:str, data:Union[pd.DataFrame,None]):
         self._layers[layer] = Layer(layer, data, self._dbutils)
 
     def __call__(self, tag:Union[None,str]=None) -> pd.DataFrame:
