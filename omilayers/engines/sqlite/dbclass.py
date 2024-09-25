@@ -381,7 +381,7 @@ class DButils:
         """Execute a SELECT query"""
         results = self._sqlite_execute_fetch_query(query, fetchall=True)
 
-        pattern = r"(?i)select\s+([\w,\s\*]+)\s+from\s+(\w+)\s*"
+        pattern = r"(?i)select\s+([\w,\s\*\"]+)\s+from\s+(\w+)\s*"
         match = re.search(pattern, query)
 
         tableName = match.group(2).strip(" ")
@@ -395,13 +395,13 @@ class DButils:
                 if col == "*":
                     parsedCols.extend(self._get_table_column_names(tableName, sanitized=False))
                 else:
-                    parsedCols.append(col)
+                    parsedCols.append(col.replace('"', ''))
             df = pd.DataFrame(results, columns=parsedCols)
         else:
             if col == "*":
                 cols = self._get_table_column_names(tableName, sanitized=False)
             else:
-                cols = [cols]
+                cols = [cols.replace('"', '')]
             df = pd.DataFrame(results, columns=cols)
         return df
 
