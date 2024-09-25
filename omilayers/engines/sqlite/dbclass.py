@@ -6,7 +6,8 @@ import pandas as pd
 from omilayers import utils
 import contextlib
 import sqlite3
-import inspect
+import re
+
 
 class DButils:
 
@@ -164,7 +165,8 @@ class DButils:
             self._sqlite_execute_commit_query(query)
 
             queryPlaceHolders = utils.create_query_placeholders(data)
-            query = f'INSERT INTO "{table}" ({",".join(data.columns)}) VALUES {queryPlaceHolders}'
+            sanitizedColumns = utils._sanitize_column_names(data.columns)
+            query = f'INSERT INTO "{table}" ({",".join(sanitizedColumns)}) VALUES {queryPlaceHolders}'
             self._sqlite_executemany_commit_query(query, [x.tolist() for x in data.to_records(index=False)])
         except Exception as error:
             print(error)
@@ -194,7 +196,7 @@ class DButils:
             else:
                 cols = [cols]
 
-        colsString = ','.join(cols)
+        colsString = ','.join(utils._sanitize_column_names(cols))
         if limit is None:
             query = f"SELECT {colsString} FROM {table}"
         else:
@@ -204,7 +206,7 @@ class DButils:
         return df.set_index(self._get_table_rowids(table, limit=limit))
 
 
-    def _get_table_column_names(self, table:str) -> List:
+    def _get_table_column_names(self, table:str, sanitized:bool=False) -> List:
         """
         Get the column names from a table.
 
@@ -220,6 +222,10 @@ class DButils:
         query = f"SELECT name FROM PRAGMA_TABLE_INFO('{table}');"
         results = self._sqlite_execute_fetch_query(query, fetchall=True)
         cols = [res[0] for res in results]
+        if sanitized:
+            cols = [f'"{res[0]}"' for res in results]
+        else:
+            cols = [res[0] for res in results]
         return cols
 
     def _insert_rows(self, table:str, data:pd.DataFrame, ordered:bool=False) -> None:
@@ -247,7 +253,8 @@ class DButils:
         self._sqlite_execute_commit_query(query)
 
         queryPlaceHolders = utils.create_query_placeholders(data)
-        query = f"INSERT INTO {table} ({','.join(data.columns)}) VALUES {queryPlaceHolders}"
+        sanitizedCols = utils._sanitize_column_names(data.columns)
+        query = f"INSERT INTO {table} ({','.join(sanitizedCols)}) VALUES {queryPlaceHolders}"
         self._sqlite_executemany_commit_query(query, [x.tolist() for x in data.to_records(index=False)])
 
     def _get_tables_info(self, tag:Union[None,str]=None) -> pd.DataFrame:
@@ -295,7 +302,7 @@ class DButils:
         new_name: str
             New name of column.
         """
-        query = f"ALTER TABLE {table} RENAME COLUMN '{col}' TO '{new_name}'"
+        query = f'ALTER TABLE {table} RENAME COLUMN "{col}" TO "{new_name}"'
         self._sqlite_execute_commit_query(query)
 
     def _select_rows(self, table:str, cols:Union[str,slice,List], where:str, values:Union[str,int,float,slice,np.ndarray,List], exclude:Union[str,List,None]=None) -> pd.DataFrame:
@@ -326,34 +333,34 @@ class DButils:
 
         if isinstance(cols, list):
             cols = np.setdiff1d(np.array(cols), np.array(exclude)).tolist()
-            cols = ",".join(cols)
+            cols = ",".join(utils._sanitize_column_names(cols))
         elif isinstance(cols, slice):
             tableCols = self._get_table_column_names(table)
             tableCols = np.setdiff1d(np.array(tableCols), np.array(exclude)).tolist()
             start, end, _ = cols.start, cols.stop, cols.step
             if start is None and end is None:
-                cols = ",".join(tableCols)
+                cols = ",".join(utils._sanitize_column_names(tableCols))
             else:
                 if start is None:
-                    cols = ",".join(tableCols[:end])
+                    cols = ",".join(utils._sanitize_column_names(tableCols[:end]))
                 elif end is None:
-                    cols = ",".join(tableCols[start:])
+                    cols = ",".join(utils._sanitize_column_names(tableCols[start:]))
                 else:
-                    cols = ",".join(tableCols[start:end])
+                    cols = ",".join(utils._sanitize_column_names(tableCols[start:end]))
 
         if where != "rowid":
-            colsToSelectString = f"rowid,{where},{cols}"
+            colsToSelectString = f'rowid,"{where}",{cols}'
         else:
-            colsToSelectString = f"rowid,{cols}"
+            colsToSelectString = f'rowid,{cols}'
 
         if isinstance(values, str):
-            query = f"SELECT {colsToSelectString} FROM {table} WHERE {where} = '{values}'"
+            query = f'SELECT {colsToSelectString} FROM {table} WHERE {where} = "{values}"'
         elif isinstance(values, int) or isinstance(values, float):
-            query = f"SELECT {colsToSelectString} FROM {table} WHERE {where} = {values}"
+            query = f'SELECT {colsToSelectString} FROM {table} WHERE {where} = {values}'
         elif isinstance(values, slice):
             start, end, _ = values.start, values.stop, values.step
             if start is None and end is None:
-                query = f"SELECT {colsToSelectString} FROM {table}"
+                query = f'SELECT {colsToSelectString} FROM {table}'
             else:
                 rowIDS = self._get_table_rowids(table)
                 if start is None:
@@ -362,24 +369,40 @@ class DButils:
                     end = rowIDS[-1]
                 else:
                     end -= 1
-                query = f"SELECT {colsToSelectString} FROM {table} WHERE {where} BETWEEN {start} AND {end}"
+                query = f'SELECT {colsToSelectString} FROM {table} WHERE {where} BETWEEN {start} AND {end}'
         else:
-            values = ",".join(f"'{x}'" for x in values)
-            query = f"SELECT {colsToSelectString} FROM {table} WHERE {where} IN ({values})"
+            values = ",".join(f'"{x}"' for x in values)
+            query = f'SELECT {colsToSelectString} FROM {table} WHERE {where} IN ({values})'
         results = self._sqlite_execute_fetch_query(query, fetchall=True)
-        df = pd.DataFrame(results, columns=colsToSelectString.split(",")) 
+        df = pd.DataFrame(results, columns=[x.replace('"', '') for x in colsToSelectString.split(",")])
         return df.set_index("rowid")
 
     def _execute_select_query(self, query) -> pd.DataFrame:
         """Execute a SELECT query"""
-        cols = query.split(" ", 1)[1]
-        cols = cols.lower().split("from")[0].strip(" ")
-        if "," in cols:
-            cols = [x.strip(" ") for x in cols.split(",")]
-        else:
-            cols = [cols]
         results = self._sqlite_execute_fetch_query(query, fetchall=True)
-        df = pd.DataFrame(results, columns=cols)
+
+        pattern = r"(?i)select\s+([\w,\s\*]+)\s+from\s+(\w+)\s*"
+        match = re.search(pattern, query)
+
+        tableName = match.group(2).strip(" ")
+
+        cols = match.group(1).strip(" ")
+        if "," in cols:
+            cols = cols.split(",")
+            parsedCols = []
+            for col in cols:
+                col = col.strip(" ")
+                if col == "*":
+                    parsedCols.extend(self._get_table_column_names(tableName, sanitized=False))
+                else:
+                    parsedCols.append(col)
+            df = pd.DataFrame(results, columns=parsedCols)
+        else:
+            if col == "*":
+                cols = self._get_table_column_names(tableName, sanitized=False)
+            else:
+                cols = [cols]
+            df = pd.DataFrame(results, columns=cols)
         return df
 
     def _add_column(self, table:str, col:str, data:Union[pd.Series,np.ndarray,List], where_col:str="rowid", where_values:Union[pd.Series,np.ndarray,List]=None) -> None:
@@ -413,10 +436,10 @@ class DButils:
         else:
             data = [(val,row) for val,row in zip(data, where_values)] 
 
-        query = f"ALTER TABLE {table} ADD COLUMN {col} {sqlDtype}"
+        query = f'ALTER TABLE {table} ADD COLUMN "{col}" {sqlDtype}'
         self._sqlite_execute_commit_query(query)
 
-        query = f"UPDATE {table} SET {col} = ? WHERE {where_col} = ?"
+        query = f'UPDATE {table} SET "{col}" = ? WHERE {where_col} = ?'
         self._sqlite_executemany_commit_query(query, values=data)
 
     def _add_multiple_columns(self, table:str, cols:List, data:pd.DataFrame) -> None:
@@ -433,14 +456,14 @@ class DButils:
             Dataframe containing the data to be added.
         """
         coltypes = utils.convert_to_sqlite_dtypes(data)
-        cols_n_types = [f"{x} {y}" for x,y in zip(cols, coltypes)]
+        cols_n_types = [f'"{x}" {y}' for x,y in zip(cols, coltypes)]
         for item in cols_n_types:
             query = f"ALTER TABLE {table} ADD COLUMN {item}"
             self._sqlite_execute_commit_query(query)
         for i in range(len(data)):
             values = data.iloc[i, :].values
-            updates = [f"{col} = {value}" for col,value in zip(cols, values)]
-            query = f"UPDATE {table} SET {','.join(updates)} WHERE rowid = {i}"
+            updates = [f'"{col}" = {value}' for col,value in zip(cols, values)]
+            query = f'UPDATE {table} SET {','.join(updates)} WHERE rowid = {i}'
             self._sqlite_execute_commit_query(query)
 
     def _update_column(self, table:str, col:str, data:Union[pd.Series, np.ndarray, List]) -> None:
@@ -458,7 +481,7 @@ class DButils:
         """
         rowids = self._get_table_rowids(table)
         data = utils.create_data_array_for_sqlite_query(data, rowids=rowids)
-        query = f"UPDATE {table} SET {col} = (?) WHERE rowid = (?)"
+        query = f'UPDATE {table} SET "{col}" = (?) WHERE rowid = (?)'
         self._sqlite_executemany_commit_query(query, values=data)
 
     def _update_tables_info(self, table:str, col:str, value:str) -> None:
@@ -474,7 +497,7 @@ class DButils:
         value: str
             The new value for the updated column.
         """
-        query = f"UPDATE tables_info SET {col} = (?) WHERE name = (?)"
+        query = f'UPDATE tables_info SET "{col}" = (?) WHERE name = (?)'
         self._sqlite_execute_commit_query(query, values=(value, table))
 
     def _get_from_tables_info(self, table:str, col:str) -> Union[str,List]:
@@ -509,7 +532,7 @@ class DButils:
         col: str
             Name of column to delete.
         """
-        query = f"ALTER TABLE {table} DROP {col}"
+        query = f'ALTER TABLE {table} DROP "{col}"'
         self._sqlite_execute_commit_query(query)
 
     def _run_query(self, query:str, fetchdf=False) -> Union[pd.DataFrame, None]:

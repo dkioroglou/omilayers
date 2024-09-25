@@ -103,10 +103,10 @@ class Stack:
             with pd.read_csv(filename, chunksize=chunksize, *args, **kwargs) as infile:
                 for dftmp in infile:
                     if not layerExists:
-                        self._layers[layer] = Layer(layer, data="dftmp", dbutilsClass=self._dbutils)
+                        self._layers[layer] = Layer(layer, data=dftmp, dbutilsClass=self._dbutils)
                         layerExists = True
                     else:
-                        self._dbutils._insert_rows(table=layer, data="dftmp", ordered=True)
+                        self._dbutils._insert_rows(table=layer, data=dftmp, ordered=True)
         else:
             data = pd.read_csv(filename, *arg, **kwargs)
             self._layers[layer] = Layer(layer, data, self._dbutils)
@@ -269,8 +269,11 @@ class Layer:
         A pandas.DataFrame with the selected columns and the filtered rows.
         """
         if isinstance(cols, list):
-            cols = ",".join(cols)
-        queryText = f"SELECT rowid,{cols} FROM {self.name} WHERE {condition}" 
+            cols = ",".join(utils._sanitize_column_names(cols))
+        elif isinstance(cols, str) and cols != "*":
+            cols = f'"{cols}"'
+        condition = condition.replace('`', '"')
+        queryText = f'SELECT rowid,{cols} FROM {self.name} WHERE {condition}'
         df = self._dbutils._execute_select_query(queryText)
         if df.shape[1] == 1:
             return df.iloc[:, 0].values

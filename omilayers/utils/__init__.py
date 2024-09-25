@@ -76,7 +76,7 @@ def create_data_array_for_sqlite_query(data:Union[List, np.ndarray, pd.Series, p
     """Convert data to sqlite digestible data format. If rowid is True, a rowid will be added to the data."""
     if rowids is None:
         if isinstance(data, pd.DataFrame):
-            return list(data.to_records(index=False))
+            return [x.tolist() for x in data.to_records(index=False)]
         elif isinstance(data, np.ndarray):
             if len(data.shape) == 1:
                 return [(value,) for value in data]
@@ -95,7 +95,7 @@ def create_data_array_for_sqlite_query(data:Union[List, np.ndarray, pd.Series, p
         else:
             df = pd.DataFrame(data)
             df['rowid'] = rowids
-            return [x.tolist() for x in data.to_records(index=False)]
+            return [x.tolist() for x in df.to_records(index=False)]
 
 
 def _dataframe_dtypes_to_sql_datatypes(df:pd.DataFrame) -> List:
@@ -103,12 +103,17 @@ def _dataframe_dtypes_to_sql_datatypes(df:pd.DataFrame) -> List:
     for item in df.dtypes.items():
         colName, colType = item
         if str(colType).startswith("int"):
-            sqlDataTypes.append(f'{colName} INTEGER')
+            sqlDataTypes.append(f'"{colName}" INTEGER')
         elif str(colType).startswith("float"):
-            sqlDataTypes.append(f'{colName} REAL')
+            sqlDataTypes.append(f'"{colName}" REAL')
         elif str(colType).startswith("object"):
-            sqlDataTypes.append(f'{colName} TEXT')
+            sqlDataTypes.append(f'"{colName}" TEXT')
         else:
-            sqlDataTypes.append(f'{colName} TEXT')
+            sqlDataTypes.append(f'"{colName}" TEXT')
     return sqlDataTypes
 
+def _sanitize_column_names(cols:Union[np.ndarray, List]) -> List:
+    sanitizedCols = []
+    for col in cols:
+        sanitizedCols.append(f'"{col}"')
+    return sanitizedCols
