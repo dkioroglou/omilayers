@@ -100,7 +100,7 @@ class TestSqlEngine(unittest.TestCase):
     def test_10_select_columns_from_stored_layer_with_query(self):
         omi = Omilayers(self.db, engine=self.engine)
         df = omi.layers['first_layer'].query("col3 == 3000 or col3 == 300", cols=['col1'])
-        self.assertTrue(np.array_equal(df['col1'].values, np.array([1000,  10000])))
+        self.assertTrue(np.array_equal(np.sort(df['col1'].values), np.array([1000,  10000])))
 
     def test_11_rename_column_of_stored_layer(self):
         omi = Omilayers(self.db, engine=self.engine)
