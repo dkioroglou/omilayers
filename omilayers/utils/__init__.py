@@ -49,7 +49,7 @@ def create_query_placeholders(data:Union[List, np.ndarray, pd.DataFrame, pd.Seri
         return "(?)"
     return str(tuple(list('?')*Ncols)).replace("'", "")
 
-def create_data_array_for_query(data:Union[List, np.ndarray, pd.Series, pd.DataFrame], rowids:Union[List,np.ndarray,None]=None) -> List:
+def create_data_array_for_duckdb_query(data:Union[List, np.ndarray, pd.Series, pd.DataFrame], rowids:Union[List,np.ndarray,None]=None) -> List:
     """Convert data to duckdb digestible data format. If rowid is True, a rowid will be added to the data."""
     if rowids is None:
         if isinstance(data, pd.DataFrame):
