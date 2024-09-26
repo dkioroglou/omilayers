@@ -18,7 +18,7 @@ class DButils:
         if not Path(db).exists():
             self._create_table_for_tables_metadata()
 
-    def _sqlite_execute_commit_query(self, query, values=None) -> None:
+    def _sqlite_execute_commit_query(self, query, values=None, get_changes=False) -> Union[str,None]:
         with contextlib.closing(sqlite3.connect(self.db)) as conn:
             with contextlib.closing(conn.cursor()) as c:
                 if values is None:
@@ -26,6 +26,12 @@ class DButils:
                 else:
                     c.execute(query, values)
                 conn.commit()
+                if get_changes:
+                    query = "SELECT changes()"
+                    c.execute(query)
+                    result = c.fetchone()
+                    return result[0]
+        return None
 
     def _sqlite_executemany_commit_query(self, query, values:List) -> None:
         with contextlib.closing(sqlite3.connect(self.db)) as conn:
@@ -71,6 +77,27 @@ class DButils:
         else:
             tables = []
         return tables
+
+    def _update_table_shape(self, table:str, nrows:int=0, ncols:int=0) -> None:
+        """
+        Update table's shape.
+
+        Parameters
+        ----------
+        table: str
+            Name of table to update shape.
+        nrows: int
+            Number of new rows added.
+        ncols: int
+            Number of new columns added.
+        """
+        # Update table's shape
+        tableRows, tableCols = self._get_table_shape(table)
+        tableRows += nrows
+        tableCols += ncols
+        tableShape = f"{tableRows}x{tableCols}"
+        query = f"UPDATE tables_info SET shape='{tableShape}' WHERE name='{table}'"
+        self._sqlite_execute_commit_query(query)
 
     def _table_exists(self, table:str) -> bool:
         tables = self._get_tables_names() 
@@ -121,7 +148,8 @@ class DButils:
         else:
             values = ",".join(f"'{x}'" for x in where_values)
             query = f"DELETE FROM {table} WHERE {where_col} IN ({values})"
-        self._sqlite_execute_commit_query(query)
+        deletedRows = self._sqlite_execute_commit_query(query, get_changes=True)
+        self._update_table_shape(table, nrows=(deletedRows * -1))
 
     def _drop_table(self, table:str) -> None: 
         """
@@ -245,17 +273,11 @@ class DButils:
             colsOrder = self._get_table_column_names(table)
             data = data[colsOrder]
 
-        # Update table's shape
-        Nrows, Ncols = self._get_table_shape(table)
-        Nrows += data.shape[0]
-        tableShape = f"{Nrows}x{Ncols}"
-        query = f"UPDATE tables_info SET shape='{tableShape}' WHERE name='{table}'"
-        self._sqlite_execute_commit_query(query)
-
         queryPlaceHolders = utils.create_query_placeholders(data)
         sanitizedCols = utils._sanitize_column_names(data.columns)
         query = f"INSERT INTO {table} ({','.join(sanitizedCols)}) VALUES {queryPlaceHolders}"
         self._sqlite_executemany_commit_query(query, [x.tolist() for x in data.to_records(index=False)])
+        self._update_table_shape(table, nrows=data.shape[0])
 
     def _get_tables_info(self, tag:Union[None,str]=None) -> pd.DataFrame:
         """
@@ -441,6 +463,7 @@ class DButils:
 
         query = f'UPDATE {table} SET "{col}" = ? WHERE {where_col} = ?'
         self._sqlite_executemany_commit_query(query, values=data)
+        self._update_table_shape(table, ncols=1)
 
     def _add_multiple_columns(self, table:str, cols:List, data:pd.DataFrame) -> None:
         """
@@ -457,6 +480,7 @@ class DButils:
         """
         coltypes = utils.convert_to_sqlite_dtypes(data)
         cols_n_types = [f'"{x}" {y}' for x,y in zip(cols, coltypes)]
+
         for item in cols_n_types:
             query = f"ALTER TABLE {table} ADD COLUMN {item}"
             self._sqlite_execute_commit_query(query)
@@ -465,6 +489,7 @@ class DButils:
             updates = [f'"{col}" = {value}' for col,value in zip(cols, values)]
             query = f'UPDATE {table} SET {','.join(updates)} WHERE rowid = {i}'
             self._sqlite_execute_commit_query(query)
+        self._update_table_shape(table, ncols=len(cols))
 
     def _update_column(self, table:str, col:str, data:Union[pd.Series, np.ndarray, List]) -> None:
         """
@@ -534,6 +559,7 @@ class DButils:
         """
         query = f'ALTER TABLE {table} DROP "{col}"'
         self._sqlite_execute_commit_query(query)
+        self._update_table_shape(table, ncols=-1)
 
     def _run_query(self, query:str, fetchdf=False) -> Union[pd.DataFrame, None]:
         """Run an arbritary query."""

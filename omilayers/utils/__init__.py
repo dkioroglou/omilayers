@@ -45,6 +45,8 @@ def create_query_placeholders(data:Union[List, np.ndarray, pd.DataFrame, pd.Seri
             Ncols = 1
         else:
             Ncols = data.shape[1]
+    if Ncols == 1:
+        return "(?)"
     return str(tuple(list('?')*Ncols)).replace("'", "")
 
 def create_data_array_for_query(data:Union[List, np.ndarray, pd.Series, pd.DataFrame], rowids:Union[List,np.ndarray,None]=None) -> List:
