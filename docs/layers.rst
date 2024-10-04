@@ -163,7 +163,7 @@ To replace the data of a layer:
 .. code-block:: python
 
    new_data = pd.DataFrame({"col1":[1,2,3,4], "col2":[10,20,30.40]})
-   omi.layers['foo_layer'].set_data("new_data") # Note that pandas.DataFrame is passed as string.
+   omi.layers['foo_layer'].set_data(new_data)
 
 
 Insert rows to layer
