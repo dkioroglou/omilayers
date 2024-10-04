@@ -204,4 +204,26 @@ To create a python dictionary with keys the values of column ``colA`` and values
    omi.layers['foo_layer'].to_json(key_col="colA", value_col="colB")
 
 
+Join layers
+-----------
+
+``omilayers`` loads data as ``pandas.DataFrame`` objects. Thus, to join two layers that have the column ``id`` in common the ``pandas.concat`` method can be used.
+
+.. code-block:: python
+
+   dfJoined = pd.concat([
+                        omi.layers['layer1'].to_df(index='id'),
+                        omi.layers['layer2'].to_df(index='id')
+                       ], axis='columns')
+
+
+or to filter layers before joining
+
+.. code-block:: python
+
+   dfJoined = pd.concat([
+                        omi.layers['layer1'].query(f"id BETWEEN 10 AND 100").set_index("id"),
+                        omi.layers['layer2'].query(f"id BETWEEN 10 AND 100").set_index("id")
+                       ], axis='columns')
+                       
 

@@ -1,7 +1,7 @@
 Configuration
 =============
 
-By default, ``omilayers`` executes queries in a single-threaded mode. To change the number of threads, pass a python dictionary with the corresponding configuration setting of DuckDB:
+Regarding DuckDB, ``omilayers`` executes queries in a single-threaded mode by default. To change the number of threads, pass a python dictionary with the corresponding configuration setting of DuckDB:
 
 .. code-block:: python
 
