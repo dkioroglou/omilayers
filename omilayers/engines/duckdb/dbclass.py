@@ -263,7 +263,10 @@ class DButils:
                     cols = ",".join(tableCols[start:end])
 
         if where != "rowid":
-            colsToSelectString = f"SELECT rowid,{where},{cols}"
+            if where not in cols.split(","):
+                colsToSelectString = f"SELECT rowid,{where},{cols}"
+            else:
+                colsToSelectString = f"SELECT rowid,{cols}"
         else:
             colsToSelectString = f"SELECT rowid,{cols}"
 

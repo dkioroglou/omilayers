@@ -371,7 +371,10 @@ class DButils:
                     cols = ",".join(utils._sanitize_column_names(tableCols[start:end]))
 
         if where != "rowid":
-            colsToSelectString = f'rowid,"{where}",{cols}'
+            if where not in cols.split(","):
+                colsToSelectString = f'rowid,"{where}",{cols}'
+            else:
+                colsToSelectString = f'rowid,{cols}'
         else:
             colsToSelectString = f'rowid,{cols}'
 

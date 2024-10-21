@@ -81,7 +81,6 @@ class Stack:
             layers = list(JSON.keys())
             tableCols = self._dbutils._get_table_column_names("tables_info")
             df = self._dbutils._select_rows(table="tables_info", cols=tableCols, where="name", values=layers)
-            df = df.iloc[:, 1:] # Query introduces the "where" column in the dataframe and it repeats.
             df = df[tableCols] # order column names
             print(df.to_string(index=False))
         else:
