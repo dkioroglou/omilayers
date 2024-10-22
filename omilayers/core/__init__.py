@@ -110,7 +110,7 @@ class Stack:
                     else:
                         self._dbutils._insert_rows(table=layer, data=dftmp, ordered=True)
         else:
-            data = pd.read_csv(filename, *arg, **kwargs)
+            data = pd.read_csv(filename, *args, **kwargs)
             self._layers[layer] = Layer(layer, data, self._dbutils)
 
     def __getitem__(self, layer:str) -> pd.DataFrame:
