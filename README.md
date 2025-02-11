@@ -72,3 +72,22 @@ for i in {1..22} {X,Y,M};do cat chr${i}.vcf >> simulated.vcf;done
 
 You can read the full documentation here: [https://omilayers.readthedocs.io](https://omilayers.readthedocs.io/en/latest/)
 
+## Citation
+
+To cite `omilayers` in your study you may include the following citation:
+```
+Kioroglou D. Omilayers: a Python package for efficient data management to support multi-omic analysis. BMC bioinformatics. 2025 Feb 6;26:40.
+```
+
+Bibtex entry:
+```
+@article{kioroglou2025omilayers,
+  title={Omilayers: a Python package for efficient data management to support multi-omic analysis},
+  author={Kioroglou, Dimitrios},
+  journal={BMC bioinformatics},
+  volume={26},
+  pages={40},
+  year={2025}
+}
+```
+
