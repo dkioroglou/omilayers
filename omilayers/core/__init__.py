@@ -20,18 +20,26 @@ class Stack:
             for name in layerNames:
                 self._layers[name] = Layer(name, data=None, dbutilsClass=self._dbutils)
 
-    def drop(self, layer:str) -> None:
+    @property
+    def names(self) -> list:
+        df = self._dbutils._get_tables_info()
+        return df['name'].values.tolist()
+
+    def drop(self, layers:list) -> None:
         """
         Delete layer.
 
         Parameters
         ----------
-        layer: str
-            The name of the layer to delete.
+        layers: list
+            A list of layer names to drop.
         """
-        self._layers.pop(layer, None)
-        if self._dbutils._table_exists(layer):  
-            self._dbutils._drop_table(layer)
+        if not isinstance(layers, list):
+            raise ValueError("A list of layers should be passed.")
+        for layer in layers:
+            self._layers.pop(layer, None)
+            if self._dbutils._table_exists(layer):  
+                self._dbutils._drop_table(layer)
 
     def rename(self, layer:str, new_name:str) -> None:
         """
@@ -113,6 +121,22 @@ class Stack:
             data = pd.read_csv(filename, *args, **kwargs)
             self._layers[layer] = Layer(layer, data, self._dbutils)
 
+    def cross_match(self, values, layer:str, match_col:str, replace_col:str, suffix:bool=False) -> list:
+        """Replace passed values using a matched column from a given layer. If suffix is True, replaced values will be added as suffix."""
+        df = self._dbutils._select_cols(table=layer, cols=[match_col, replace_col])
+        JSON = {x:y for x,y in zip(df[match_col], df[replace_col])}
+        if suffix:
+            try:
+                replaced_vals = [f"{x}_{JSON[x]}" for x in values]
+            except Exception:
+                raise ValueError("Suffix could not be added to One or more values.")
+        else:
+            try:
+                replaced_vals = [JSON[x] for x in values]
+            except Exception:
+                raise ValueError("One or more values could not be replaced.")
+        return replaced_vals
+
     def __getitem__(self, layer:str) -> pd.DataFrame:
         if not self._layers.get(layer, False):
             raise ValueError(f"Layer '{layer}' does not exist.")
@@ -125,11 +149,16 @@ class Stack:
         df = self._dbutils._select_cols(table="tables_info", cols="*")
         if tag is None:
             return df
-        return df.query(f"tag == '{tag}'")
+        return df[df['tag'].str.contains(tag)]
 
     def __repr__(self):
         df = self._dbutils._get_tables_info()
-        return df.to_string(index=False)
+        # Truncate each string cell to max width with ellipsis
+        with pd.option_context(
+            'display.max_colwidth', 40,
+            'display.expand_frame_repr', False,
+        ):
+            return str(df)
 
 
 class Selector:
@@ -188,8 +217,38 @@ class Layer:
         self._dbutils._update_tables_info(table=self.name, col="info", value=value)
 
     def set_tag(self, value:str) -> None:
-        """Change the assigned tag of the layer."""
+        """Change the assigned tag of the layer. Multiple tags can be passed with comma."""
+        if "," in value:
+            value = ",".join([v.strip(" ") for v in value.split(",")])
         self._dbutils._update_tables_info(table=self.name, col="tag", value=value)
+
+    def add_tag(self, value:str) -> None:
+        """Add tag to existing tags of layer. Multiple tags can be passed with comma."""
+        previous_tags = self._dbutils._get_from_tables_info(table=self.name, col="tag")
+        if "," in previous_tags:
+            previous_tags = previous_tags.split(",")
+        else:
+            previous_tags = [previous_tags]
+        if "," in value:
+            value = [v.strip(" ") for v in value.split(",")]
+        else:
+            value = [value]
+        tags = previous_tags + value
+        tags = ",".join(tags)
+        self._dbutils._update_tables_info(table=self.name, col="tag", value=tags)
+
+    def drop_tag(self, tag:str) -> None:
+        """Delete tag from existing tags of layer."""
+        tags = self._dbutils._get_from_tables_info(table=self.name, col="tag")
+        if "," in tags:
+            tags = tags.split(",")
+        else:
+            tags = [tags]
+        if tag not in tags:
+            raise ValueError("Tag not found in stored tags.")
+        tags.remove(tag)
+        tags = ",".join(tags)
+        self._dbutils._update_tables_info(table=self.name, col="tag", value=tags)
 
     def set_data(self, data:pd.DataFrame) -> None:
         """

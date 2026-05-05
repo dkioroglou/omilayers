@@ -302,44 +302,6 @@ class DButils:
             df = con.sql(query).fetchdf()
         return df
 
-    # def _add_column(self, table:str, col:str, data:Union[pd.Series,np.ndarray,List], where_col:str="rowid", where_values:Union[pd.Series,np.ndarray,List]=None) -> None:
-    #     """
-    #     Adds a new column to an existing table.
-    #
-    #     Parameters
-    #     ----------
-    #     table: str
-    #         Name of existing table.
-    #     col: str
-    #         The name of the new column.
-    #     data: pandas.Series, numpy.ndarray, list
-    #         The data of the new column.
-    #     where_col: str
-    #         Name of column whose values will be used as reference for the insertion of new data.
-    #     where_values: pandas.Series, numpy.ndarray, list
-    #         Values of reference column.
-    #     """
-    #     duckdbDtype = utils.convert_to_duckdb_dtypes(data)[0]
-    #
-    #     if isinstance(where_values, list):
-    #         where_values = np.array(where_values)
-    #
-    #     if where_col != "rowid" and not where_values.any():
-    #         raise ValueError("Pass values for WHERE clause if WHERE column is not rowid.")
-    #
-    #     if where_col == "rowid":
-    #         rowids = self._get_table_rowids(table)
-    #         data = utils.create_data_array_for_duckdb_query(data, rowids=rowids)
-    #     else:
-    #         data = [(val,row) for val,row in zip(data, where_values)] 
-    #
-    #     with duckdb.connect(self.db, read_only=self.read_only) as con:
-    #         self._configureDB(con)
-    #         query = f"ALTER TABLE {table} ADD COLUMN {col} {duckdbDtype}"
-    #         con.execute(query)
-    #         query = f"UPDATE {table} SET {col} = ? WHERE {where_col} = ?"
-    #         con.executemany(query, data)
-
     def _add_column(self, table:str, col:str, data:Union[pd.Series,np.ndarray,List], where_col:str="rowid", where_values:Union[pd.Series,np.ndarray,List]=None) -> None:
         """
         Adds a new column to an existing table.
